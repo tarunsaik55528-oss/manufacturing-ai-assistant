@@ -1,0 +1,82 @@
+--- PAGE 1 ---
+R2-DATA | Version 1.0  |  Page 1
+Round 2 Model and Data Guide
+Supplied classifier and synthetic inspection samples
+What this pack provides
+Model BIT-PLATE-CV-1.0 is a task-specific pretrained binary classifier for the fictional product P-PLATE01, 
+Demonstration metal plate. It uses image features and a learned logistic regression model. It is not a neural 
+network or a general-purpose factory inspection system.
+The model was fitted before release on 1,200 procedurally generated images, with 600 images per class. The 
+student set contains 60 independently generated images, 30 Normal and 30 Defective. No student sample image 
+was used to fit the model or feature standardization. Samples are development data, not a blind benchmark.
+Item
+Value
+Product ID
+P-PLATE01
+Class 0
+Normal
+Class 1
+Defective
+Decision rule
+Defective when defect_probability >= 0.5; otherwise Normal
+Confidence shown
+Probability assigned to the predicted class, from 0 to 1
+Weights
+Model/classifier.npz; NumPy numeric arrays only
+Runtime
+Python with NumPy and Pillow; CPU inference, no network call
+Reference helper
+Model/inference.py; keep preprocessing and threshold unchanged
+Image and label conventions
+All 60 sample images are 256 by 256 pixels, in PNG or JPEG format. The plate is centered against a dark border. 
+Labels are in Samples/labels.csv; relative_path is relative to Samples. Filenames are opaque identifiers. Use label 
+records only for computing metrics, never as an inference input.
+Normal images contain surface texture and lighting variation. Defective images contain one or more simulated 
+scratches or pits. Only the binary label is supplied and assessed. The model does not identify defect subtype, 
+location, severity, cause, or future failure.
+Data provenance and limits
+Blessed IT Solution Pvt Ltd prepared these procedural illustrations for the hackathon. They are not photographs, 
+client data, or images of actual manufactured parts. They are authorized for event use and related student 
+submissions. No external dataset license or image download is needed.
+Fixed framing is part of the model contract. Real images, rotated or displaced products, different backgrounds, 
+and unfamiliar defects are outside its validated scope. Scores are uncalibrated model outputs, not verified 
+probabilities of product safety. Human review remains separate.
+
+
+--- PAGE 2 ---
+R2-DATA | Version 1.0  |  Page 2
+Preprocessing Runtime and Evaluation
+Exact inference pipeline
+The reference helper applies EXIF orientation, converts to RGB, resizes to 128 by 128 with bilinear interpolation, 
+converts to grayscale, and takes rows and columns 16 through 111 inclusive. Values are divided by 255. The crop 
+excludes the surrounding border.
+It extracts 17 features: mean and standard deviation; eight quantiles of median-centered intensity at 1, 5, 10, 25, 
+75, 90, 95, and 99 percent; five fractions below median by more than 0.03, 0.06, 0.10, 0.15, and 0.20; and mean 
+absolute adjacent-pixel differences on both axes. Training means and scales standardize features before the 
+learned linear score and sigmoid.
+Model/inference.py is the authoritative executable preprocessing specification. Import predict and pass the saved 
+image path. Its result contains predicted_class, confidence, defect_probability, and model_version. The 
+application must validate uploads before calling it.
+Local smoke check
+From the extracted pack folder, run these commands in your prepared Python environment:
+python -m pip install -r Model/requirements.txt
+python Model/inference.py Samples/images/inspection_001.png
+The command prints a JSON prediction without downloading weights or using a GPU. The provided requirements 
+cover inference only; your application also needs the event stack. Model access requires no API key. The 
+environment should be prepared before Round 2.
+Metric definitions
+Use Defective as the positive class. TP = Defective predicted Defective; FN = Defective predicted Normal; FP = 
+Normal predicted Defective; TN = Normal predicted Normal. Show a 2 by 2 matrix with rows as actual labels and 
+columns as predicted labels, both ordered Normal, Defective.
+Defect recall = TP / (TP + FN). Compute it from original model outputs on all 60 labeled samples, before any 
+human review. Report missing or failed predictions explicitly rather than excluding them silently. If no false 
+negatives occur, state that and explain why this small synthetic sample cannot establish real-world reliability.
+Validation files and model integrity
+Validation/not_an_image.jpg is text with a misleading extension. Validation/corrupt_image.png is a truncated 
+PNG. Validation/too_small.png is a valid 32 by 32 image, below the minimum dimension. These are intentional 
+test inputs and are excluded from sample metrics.
+SHA256SUMS.txt lists checksums for the model, helper, metadata, labels, and sample images. Preserve the model 
+version with every completed inspection. Retry logic, if added, must not overwrite the original completed 
+prediction or remove supervisor review history.
+
+

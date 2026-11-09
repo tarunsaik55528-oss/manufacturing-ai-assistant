@@ -1,0 +1,4 @@
+product_id,document_id,revision,pdf_filename
+P-PLATE01,Q-PLATE-01,1.0,Q_PLATE_01_Containment_Rev1_0.pdf
+P-PLATE01,Q-PLATE-02,1.0,Q_PLATE_02_Review_Rev1_0.pdf
+P-GASKET02,Q-GASKET-01,1.0,Q_GASKET_01_Review_Rev1_0.pdf
